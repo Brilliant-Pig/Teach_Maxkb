@@ -57,9 +57,14 @@
 
                 <div v-if="!isLogin" class="custom-row verify-row-box animate-in">
                 <div class="glass-input-group">
-                    <input v-model="registerForm.code" type="text" placeholder="输入验证码" required />
-                    <button type="button" @click="sendVerifyCode" :disabled="isCounting" class="magic-verify-btn">
-                    {{ isCounting ? `${countdown}s` : '获取验证码' }}
+                    <input v-model="registerForm.code" type="text" placeholder="6位验证码" required />
+                    <button 
+                        type="button" 
+                        @click="sendCode" 
+                        :disabled="loading || codeSent" 
+                        class="inner-send-btn"
+                    >
+                        {{ loading ? '发送中...' : (codeSent ? `${countdown}s` : '获取验证码') }}
                     </button>
                 </div>
                 </div>
@@ -91,6 +96,8 @@
 
 <script setup>
 import { ref } from 'vue';
+const loading = ref(false);      // 这里的 loading 必须声明
+const codeSent = ref(false);     // 控制按钮是否进入倒计时状态
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
@@ -105,19 +112,40 @@ const registerForm = ref({ username: '', email: '', password: '', code: '', role
 const toggleMode = () => { isLogin.value = !isLogin.value; };
 
 // 发送验证码
-const sendEmailCode = async () => {
-    if (!registerForm.value.email) return alert('请先填写邮箱');
+const sendCode = async () => {
+    if (!registerForm.value.email) {
+        alert('请先输入邮箱');
+        return;
+    }
+    
+    loading.value = true; // 开启加载状态
     try {
-        const res = await axios.post('http://127.0.0.1:33001/api/auth/send-code', { email: registerForm.value.email });
+        // 这里的路径加上 /api，匹配 vite.config.js 的代理
+        const res = await axios.post('/api/auth/send-code', { 
+            email: registerForm.value.email 
+        });
+
         if (res.data.code === 0) {
-            alert('验证码已发送');
+            alert('验证码已发送！');
+            // 开启倒计时
+            codeSent.value = true;
             countdown.value = 60;
             const timer = setInterval(() => {
                 countdown.value--;
-                if (countdown.value <= 0) clearInterval(timer);
+                if (countdown.value <= 0) {
+                    clearInterval(timer);
+                    codeSent.value = false;
+                }
             }, 1000);
-        } else { alert(res.data.msg); }
-    } catch (e) { alert('发送失败'); }
+        } else {
+            alert(res.data.msg || '发送失败');
+        }
+    } catch (err) {
+        console.error('发送验证码错误:', err);
+        alert('网络连接失败，请检查后端服务是否启动');
+    } finally {
+        loading.value = false; // 关闭加载状态
+    }
 };
 
 // 登录逻辑
@@ -509,6 +537,33 @@ const handleRegister = async () => {
     font-size: 14px;
     outline: none;
     }
+    .inner-send-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    white-space: nowrap;
+    margin-left: 10px;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.inner-send-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4);
+}
+
+.inner-send-btn:disabled {
+    background: #334155;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.6;
+}
 
     .magic-verify-btn {
     background: transparent;
