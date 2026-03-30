@@ -1,0 +1,22 @@
+/* 全局点击烟花特效 - 星云版 */
+.firework {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999999;
+  box-shadow: 0 0 8px currentColor;
+  animation: firework-fade 1.2s ease-out forwards;
+}
+
+@keyframes firework-fade {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3);
+  }
+}

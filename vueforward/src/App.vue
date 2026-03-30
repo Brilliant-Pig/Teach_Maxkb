@@ -41,26 +41,20 @@
 </template>
 
 <script setup>
-// ✨ 1. 补全所有缺失的 Vue API 引入
 import { ref, onMounted, watch } from 'vue'; 
 import { useRoute } from 'vue-router';
-// ✨ 2. 引入头像组件
 import UserAvatar from './components/UserDropdown.vue';
 
 const route = useRoute();
 const showNav = ref(true);
-const isLoggedIn = ref(false); // 是否已登录
-const userRole = ref('');      // 用户角色
+const isLoggedIn.ref(false);
+const userRole.ref('');
 
-/**
- * ✨ 核心逻辑：从本地存储更新权限状态
- */
 const updateAuthState = () => {
   try {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
     
-    // 确保 token 和 user 字符串都存在，且不是错误的 "undefined" 字符串
     if (token && userStr && userStr !== 'undefined') {
       const user = JSON.parse(userStr);
       isLoggedIn.value = true;
@@ -75,21 +69,64 @@ const updateAuthState = () => {
   }
 };
 
-// 页面加载时初始化一次
 onMounted(() => {
   updateAuthState();
+
+  // ==============================================
+  // 🎆 全局点击烟花特效（已完美集成，不影响原有功能）
+  // ==============================================
+  document.addEventListener("click", (e) => {
+    const x = e.clientX;
+    const y = e.clientY;
+
+    const colors = [
+      "#409eff", "#71b7ff", "#a29bfe", "#6c5ce7",
+      "#00c48c", "#ff7675", "#fd79a8", "#ffeaa7"
+    ];
+
+    for (let i = 0; i < 24; i++) {
+      createParticle(x, y, colors);
+    }
+  });
+
+  function createParticle(x, y, colors) {
+    const particle = document.createElement("div");
+    particle.classList.add("firework");
+    particle.style.left = x + "px";
+    particle.style.top = y + "px";
+    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 7;
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+    const drag = 0.95;
+
+    let px = 0, py = 0;
+    let cvx = vx, cvy = vy;
+
+    const animate = () => {
+      px += cvx;
+      py += cvy;
+      cvx *= drag;
+      cvy *= drag;
+
+      particle.style.transform = `translate(${px}px, ${py}px)`;
+
+      if (Math.abs(cvx) < 0.1 && Math.abs(cvy) < 0.1) {
+        particle.remove();
+        return;
+      }
+      requestAnimationFrame(animate);
+    };
+
+    document.body.appendChild(particle);
+    requestAnimationFrame(animate);
+  }
 });
 
-/**
- * ✨ 监听路由变化
- * 1. 控制导航栏在登录页隐藏
- * 2. 每次切换页面时重新校验登录状态，确保右上角实时同步
- */
 watch(() => route.path, (newPath) => {
-  // 判断是否处于登录/注册页面
   showNav.value = !['/login', '/Auth'].includes(newPath);
-  
-  // 刷新登录状态
   updateAuthState();
 });
 </script>
@@ -102,7 +139,7 @@ body, html {
   height: 100%;
   font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
   overflow: hidden;
-  background: #0a0e14; /* 深色科技背景 */
+  background: #0a0e14;
 }
 
 #app {
@@ -111,6 +148,25 @@ body, html {
   flex-direction: column;
   position: relative;
   color: #e0e0e0;
+}
+
+/* ==============================================
+   🎆 烟花样式（已集成，全局生效）
+============================================== */
+.firework {
+  position: fixed;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999999;
+  box-shadow: 0 0 6px currentColor;
+  animation: firework-fade 1.1s ease-out forwards;
+}
+
+@keyframes firework-fade {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.8); }
 }
 
 /* 粒子背景动画 */
@@ -141,7 +197,7 @@ body, html {
   to { transform: translateY(-1000px); }
 }
 
-/* 导航样式修改 */
+/* 导航样式 */
 .main-nav {
   display: flex;
   justify-content: space-between;
@@ -203,7 +259,7 @@ body, html {
   transform: translateX(30px);
 }
 
-/* 页脚样式 */
+/* 页脚 */
 .app-footer {
   height: 32px;
   background: rgba(0, 0, 0, 0.3);
