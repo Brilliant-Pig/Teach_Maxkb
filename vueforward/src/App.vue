@@ -72,10 +72,12 @@ const updateAuthState = () => {
 onMounted(() => {
   updateAuthState();
 
-  // ==============================================
-  // 🎆 全局点击烟花特效（已完美集成，不影响原有功能）
-  // ==============================================
+  // 🎆 全局点击烟花特效
   document.addEventListener("click", (e) => {
+    if (e.target.closest('.user-profile-container')) {
+      return; 
+    }
+
     const x = e.clientX;
     const y = e.clientY;
 
@@ -124,6 +126,7 @@ onMounted(() => {
     requestAnimationFrame(animate);
   }
 });
+});
 
 watch(() => route.path, (newPath) => {
   showNav.value = !['/login', '/Auth'].includes(newPath);
@@ -150,9 +153,7 @@ body, html {
   color: #e0e0e0;
 }
 
-/* ==============================================
-   🎆 烟花样式（已集成，全局生效）
-============================================== */
+
 .firework {
   position: fixed;
   width: 5px;
