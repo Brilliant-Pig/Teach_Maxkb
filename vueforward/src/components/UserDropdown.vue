@@ -1,14 +1,24 @@
 <template>
   <div class="user-profile-container" ref="dropdownRef">
-    <div class="avatar-trigger" @click="toggleDropdown">
+    <!-- 增加 stop 防止事件冒泡 -->
+    <div class="avatar-trigger" @click.stop="toggleDropdown">
       <div class="avatar-circle">
         {{ username ? username.charAt(0).toUpperCase() : 'U' }}
       </div>
       <span class="user-name-display">{{ username }}</span>
     </div>
 
-    <transition name="github-fade">
-      <div v-if="isOpen" class="profile-dropdown">
+    <transition
+      name="github-fade"
+      @after-enter="onAfterEnter"
+      @after-leave="onAfterLeave"
+    >
+      <div
+        v-if="isOpen"
+        class="profile-dropdown"
+        @click.stop
+        :style="{ transformOrigin: 'top right' }"
+      >
         <div class="user-header">
           <p class="signed-in-as">当前登录邮箱</p>
           <p class="user-email">{{ email }}</p>
@@ -24,10 +34,10 @@
         <div class="dropdown-divider"></div>
 
         <div class="menu-links">
-          <a @click="handleProfile">个人设置</a>
-          <a @click="handleHelp">获取帮助</a>
+          <a @click.stop="handleProfile">个人设置</a>
+          <a @click.stop="handleHelp">获取帮助</a>
           <div class="dropdown-divider"></div>
-          <a @click="handleLogout" class="logout-btn">退出登录</a>
+          <a @click.stop="handleLogout" class="logout-btn">退出登录</a>
         </div>
       </div>
     </transition>
@@ -43,6 +53,9 @@ const router = useRouter();
 const isOpen = ref(false);
 const dropdownRef = ref(null);
 
+// 防抖：防止连续疯狂点击
+let clickLock = false;
+
 const userData = ref(JSON.parse(localStorage.getItem('user') || '{}'));
 
 const username = computed(() => userData.value.username || '未登录');
@@ -53,7 +66,12 @@ const updateLocalInfo = () => {
   userData.value = JSON.parse(localStorage.getItem('user') || '{}');
 };
 
+// 优化：防抖切换，防止抖动
 const toggleDropdown = () => {
+  if (clickLock) return;
+  clickLock = true;
+  setTimeout(() => (clickLock = false), 150);
+
   updateLocalInfo();
   isOpen.value = !isOpen.value;
 };
@@ -76,10 +94,15 @@ const handleLogout = async () => {
 };
 
 const handleClickOutside = (event) => {
+  if (!isOpen.value) return;
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     isOpen.value = false;
   }
 };
+
+
+const onAfterEnter = () => {};
+const onAfterLeave = () => {};
 
 onMounted(() => {
   updateLocalInfo();
@@ -105,6 +128,7 @@ const handleHelp = () => {
 .user-profile-container {
   position: relative;
   display: inline-block;
+  user-select: none; 
 }
 
 .avatar-trigger {
@@ -114,7 +138,7 @@ const handleHelp = () => {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
-  transition: background 0.2s;
+  transition: background 0.2s ease;
 }
 
 .avatar-trigger:hover {
@@ -151,6 +175,7 @@ const handleHelp = () => {
   text-overflow: ellipsis;
 }
 
+/* 优化：下拉框动画更自然 */
 .profile-dropdown {
   position: absolute;
   top: 45px;
@@ -162,6 +187,8 @@ const handleHelp = () => {
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   z-index: 1000;
   padding: 8px 0;
+  transform-origin: top right;
+  backface-visibility: hidden;
 }
 
 .user-header {
@@ -211,6 +238,7 @@ const handleHelp = () => {
   color: #c9d1d9;
   cursor: pointer;
   text-decoration: none;
+  transition: all 0.15s ease;
 }
 
 .menu-links a:hover {
@@ -222,12 +250,19 @@ const handleHelp = () => {
   background: #d5514e !important;
 }
 
-.github-fade-enter-active, .github-fade-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
+/* 动画大幅增强 */
+.github-fade-enter-active {
+  transition: opacity 0.24s ease, transform 0.24s ease;
 }
-
-.github-fade-enter-from, .github-fade-leave-to {
+.github-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.github-fade-enter-from {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-6px) scale(0.96);
+}
+.github-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
 }
 </style>

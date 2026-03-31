@@ -47,8 +47,10 @@ import UserAvatar from './components/UserDropdown.vue';
 
 const route = useRoute();
 const showNav = ref(true);
-const isLoggedIn.ref(false);
-const userRole.ref('');
+// ========== 这里修复了 ==========
+const isLoggedIn = ref(false);
+const userRole = ref('');
+// ===============================
 
 const updateAuthState = () => {
   try {
@@ -125,8 +127,7 @@ onMounted(() => {
     document.body.appendChild(particle);
     requestAnimationFrame(animate);
   }
-});
-});
+
 
 watch(() => route.path, (newPath) => {
   showNav.value = !['/login', '/Auth'].includes(newPath);
@@ -216,6 +217,7 @@ body, html {
   font-weight: bold;
   background: linear-gradient(120deg, #409eff, #71b7ff);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
